@@ -1,3 +1,4 @@
 
 // Flows will be imported for their side effects in this file.
-import './flows/mpesa-stk-push-flow';
+
+// import '@/ai/flows/mpesa-stk-push-flow'; // M-Pesa flow import removed

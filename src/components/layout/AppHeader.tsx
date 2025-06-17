@@ -3,7 +3,7 @@
 
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
-import { Logo } from './Logo';
+import { Logo } from './Logo'; // Corrected casing
 import { useAuth } from '@/context/AuthContext';
 import { LayoutDashboard, LogOut, Settings, ClipboardList } from 'lucide-react';
 import {

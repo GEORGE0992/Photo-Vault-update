@@ -262,7 +262,7 @@ export default function ContributionsPage() {
                             <Input
                               type={column.cellType === 'number' && column.accessorKey !== 'phone' ? 'number' : 'text'}
                               value={member[column.accessorKey as keyof Omit<Member, 'id'|'actions'>]}
-                              onChange={(e) => {
+                              onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
                                 handleInputChange(member.id, column.accessorKey as keyof Omit<Member, 'id'|'sn'>, e.target.value);
                               }}
                               placeholder={column.placeholder}
