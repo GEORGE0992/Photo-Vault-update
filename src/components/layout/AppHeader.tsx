@@ -3,7 +3,7 @@
 
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
-import { Logo } from './Logo'; // Corrected import without .tsx
+import { Logo } from '@/components/layout/Logo';
 import { useAuth } from '@/context/AuthContext';
 import { LayoutDashboard, LogOut, Settings, ClipboardList } from 'lucide-react';
 import {
