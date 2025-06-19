@@ -1,5 +1,5 @@
 
-import { Logo } from '@/components/layout/Logo';
+import { Logo } from '../layout/Logo';
 import type React from 'react';
 
 interface AuthLayoutProps {
