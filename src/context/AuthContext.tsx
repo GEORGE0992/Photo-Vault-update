@@ -5,7 +5,7 @@ import type React from 'react';
 import { createContext, useContext, useState, useEffect } from 'react';
 import { useRouter, usePathname } from 'next/navigation';
 import { useToast } from '@/hooks/use-toast';
-import { auth } from '@/lib/firebase'; // Import Firebase auth instance
+import { auth } from "@/lib/firebase"; // Import Firebase auth instance
 import type { User as FirebaseUser } from 'firebase/auth';
 import { 
   createUserWithEmailAndPassword, 
@@ -87,17 +87,18 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       if (userCredential.user) {
         await updateProfile(userCredential.user, { displayName: username.trim() || null });
          // Update local user state immediately after profile update for instant reflection
-        setUser(prevUser => {
-          const currentFirebaseUser = auth.currentUser;
-          if (currentFirebaseUser) {
-             return {
-                uid: currentFirebaseUser.uid,
-                email: currentFirebaseUser.email,
-                displayName: currentFirebaseUser.displayName,
-            };
-          }
-          return null; // Should not happen if signup was successful
-        });
+        setUser(prevUser => prevUser ? { ...prevUser, displayName: username.trim() || null } : null);
+        if (auth.currentUser) { // Refresh user to get latest profile
+            await auth.currentUser.reload();
+            const refreshedFirebaseUser = auth.currentUser;
+             if (refreshedFirebaseUser) {
+                setUser({
+                    uid: refreshedFirebaseUser.uid,
+                    email: refreshedFirebaseUser.email,
+                    displayName: refreshedFirebaseUser.displayName,
+                });
+            }
+        }
       }
       toast({ title: "Signup Successful!", description: `Welcome, ${username || email}!` });
       router.push('/contributions');

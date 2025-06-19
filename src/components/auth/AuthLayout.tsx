@@ -1,3 +1,4 @@
+
 import { Logo } from '@/components/layout/Logo';
 import type React from 'react';
 

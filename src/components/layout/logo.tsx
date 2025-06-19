@@ -1,4 +1,3 @@
-
 import Link from 'next/link';
 import { PhotoVaultIcon } from '@/components/icons/PhotoVaultIcon';
 

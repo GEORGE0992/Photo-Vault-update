@@ -1,14 +1,13 @@
-
 "use client";
 import type React from 'react';
 import { AppHeader } from './AppHeader';
 import { useAuth } from '@/context/AuthContext';
 import { useRouter } from 'next/navigation';
 import { useEffect } from 'react';
-import { Skeleton } from '@/components/ui/skeleton'; // Changed to path alias
+import { Skeleton } from '../ui/skeleton';
 
 interface AppShellProps {
-  children: React.ReactNode; // Moved inside the interface
+  children: React.ReactNode;
 }
 
 export function AppShell({ children }: AppShellProps) {
@@ -29,7 +28,7 @@ export function AppShell({ children }: AppShellProps) {
             <Skeleton className="h-8 w-32" />
             <div className="flex items-center gap-4">
               <Skeleton className="h-8 w-24" />
-              <Skeleton className="h-8 w-24" /> {/* Corrected a potential duplicate if one was for avatar */}
+              <Skeleton className="h-8 w-24" />
               <Skeleton className="h-9 w-9 rounded-full" />
             </div>
           </div>

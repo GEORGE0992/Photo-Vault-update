@@ -5,11 +5,13 @@ import { AppShell } from "@/components/layout/AppShell";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-// import { useAuth } from "@/context/AuthContext"; // User role logic temporarily removed
+import { useAuth } from "@/context/AuthContext";
 import { useToast } from "@/hooks/use-toast";
-import { UserPlus, Edit3, Trash2, Phone, Landmark, PiggyBank, FileText, Info, UserCog, Percent } from "lucide-react";
-import React, { useState, useEffect } from "react";
+import { UserPlus, Edit3, Trash2, Phone, Landmark, PiggyBank, FileText, Info, UserCog, Percent, Search, Filter as FilterIcon } from "lucide-react";
+import React, { useState, useEffect, useMemo } from "react";
 
 interface Member {
   id: string;
@@ -33,6 +35,9 @@ interface ColumnDefinition {
   className?: string; 
 }
 
+// DESIGNATED ADMIN EMAILS - Add any email addresses that should have admin privileges
+const ADMIN_EMAILS = ["admin@photovault.com", "george@photovault.com"];
+
 const tableColumns: ColumnDefinition[] = [
   { accessorKey: "sn", header: "SN", cellType: "number", isEditable: false, className: "w-[60px]"},
   { accessorKey: "name", header: "Name", cellType: "text", placeholder: "Member Name", defaultValue: "", isEditable: true, icon: UserCog },
@@ -55,39 +60,76 @@ const initialMembersData: Omit<Member, 'id'>[] = [
   { sn: 8, name: "Oliver", phone: "0797xxxx989", amount: 1124, savings: 1000, loan: 0, interest: 0 },
   { sn: 9, name: "Syphrine", phone: "0799xxxx706", amount: 1124, savings: 1000, loan: 1000, interest: 352 },
   { sn: 10, name: "Phanice", phone: "0727xxxx111", amount: 1124, savings: 0, loan: 0, interest: 0 },
+  { sn: 11, name: "George", phone: "0712xxxx345", amount: 1000, savings: 1000, loan: 0, interest: 0 },
 ];
 
 const initialMembersWithId: Member[] = initialMembersData.map((member, index) => ({
   ...member,
-  id: `member-${Date.now()}-${index}`,
+  id: `member-${Date.now()}-${index}`, 
 }));
 
 const LOCAL_STORAGE_KEY_CONTRIBUTIONS = "photoVaultContributionsData";
 
 export default function ContributionsPage() {
   const [members, setMembers] = useState<Member[]>([]);
+  const [isAdmin, setIsAdmin] = useState(false);
   const { toast } = useToast();
-  // const { user } = useAuth(); // Temporarily removed for Firebase Auth integration
-  const isAdmin = false; // Temporarily set to false, making page read-only until roles are re-integrated
+  const { user } = useAuth(); 
+
+  // Filter states
+  const [searchTerm, setSearchTerm] = useState("");
+  const [showOnlyWithLoan, setShowOnlyWithLoan] = useState(false);
+
+  useEffect(() => {
+    if (user?.email && ADMIN_EMAILS.includes(user.email)) {
+      setIsAdmin(true);
+    } else {
+      setIsAdmin(false);
+    }
+  }, [user]);
 
   useEffect(() => {
     const storedMembers = localStorage.getItem(LOCAL_STORAGE_KEY_CONTRIBUTIONS);
     if (storedMembers) {
-      setMembers(JSON.parse(storedMembers));
+      try {
+        const parsedMembers = JSON.parse(storedMembers);
+        if (Array.isArray(parsedMembers)) {
+          setMembers(parsedMembers);
+        } else {
+          setMembers(initialMembersWithId); 
+        }
+      } catch (error) {
+        console.error("Failed to parse members from localStorage", error);
+        setMembers(initialMembersWithId); 
+      }
     } else {
       setMembers(initialMembersWithId);
     }
   }, []);
 
   useEffect(() => {
-    if (members.length > 0) { // Avoid saving empty initial state if it hasn't loaded yet
+    if (members.length > 0 && members !== initialMembersWithId && JSON.stringify(members) !== JSON.stringify(initialMembersWithId)) {
         localStorage.setItem(LOCAL_STORAGE_KEY_CONTRIBUTIONS, JSON.stringify(members));
+    } else if (members.length === 0 && localStorage.getItem(LOCAL_STORAGE_KEY_CONTRIBUTIONS)) {
+        // This condition might need adjustment based on desired behavior for "clearing all data"
     }
   }, [members]);
 
+  const filteredMembers = useMemo(() => {
+    return members.filter(member => {
+      const matchesSearchTerm = searchTerm.trim() === "" ||
+        member.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        member.phone.toLowerCase().includes(searchTerm.toLowerCase());
+      
+      const matchesLoanFilter = !showOnlyWithLoan || (showOnlyWithLoan && member.loan > 0);
+
+      return matchesSearchTerm && matchesLoanFilter;
+    });
+  }, [members, searchTerm, showOnlyWithLoan]);
+
 
   const handleInputChange = (memberId: string, fieldKey: keyof Omit<Member, 'id' | 'sn'>, rawValue: string) => {
-    if (!isAdmin) return; // This will prevent changes since isAdmin is false
+    if (!isAdmin) return;
 
     setMembers(prevMembers =>
       prevMembers.map(member => {
@@ -120,10 +162,7 @@ export default function ContributionsPage() {
   };
 
   const handleAddMember = () => {
-    if (!isAdmin) {
-        toast({ title: "Permission Denied", description: "Editing features are temporarily disabled.", variant: "destructive"});
-        return;
-    }
+    // Any authenticated user can add a new member
     const newMemberId = `member-${Date.now()}-${members.length}`;
     const newSn = members.length > 0 ? Math.max(...members.map(m => m.sn)) + 1 : 1;
 
@@ -141,13 +180,13 @@ export default function ContributionsPage() {
     setMembers(prevMembers => [...prevMembers, newMember]);
     toast({
       title: "Member Added",
-      description: `New member (SN ${newSn}) added.`,
+      description: `New member (SN ${newSn}) added. Please fill in their details.`,
     });
   };
 
   const handleUpdateMember = (memberId: string) => {
-    if (!isAdmin) {
-        toast({ title: "Permission Denied", description: "Editing features are temporarily disabled.", variant: "destructive"});
+    if (!isAdmin) { 
+        toast({ title: "Permission Denied", description: "You do not have permission to update members.", variant: "destructive"});
         return;
     }
     const memberToUpdate = members.find(m => m.id === memberId);
@@ -172,7 +211,7 @@ export default function ContributionsPage() {
 
   const handleDeleteMember = (memberId: string) => {
     if (!isAdmin) {
-        toast({ title: "Permission Denied", description: "Editing features are temporarily disabled.", variant: "destructive"});
+        toast({ title: "Permission Denied", description: "You do not have permission to delete members.", variant: "destructive"});
         return;
     }
     const memberToDelete = members.find(m => m.id === memberId);
@@ -183,6 +222,7 @@ export default function ContributionsPage() {
     });
   };
 
+  const hasActiveFilters = searchTerm.trim() !== "" || showOnlyWithLoan;
 
   return (
     <AppShell>
@@ -193,28 +233,86 @@ export default function ContributionsPage() {
                 <div>
                     <CardTitle className="text-2xl font-headline">Member Contributions & Details</CardTitle>
                     <CardDescription>
-                      View member details and financial records. Editing features are temporarily disabled pending role system update.
+                      {isAdmin 
+                        ? "Manage member details and financial records. All members can add new entries." 
+                        : "View member details and financial records. You can add new entries. Editing and deleting existing records are features available for administrators."
+                      }
                     </CardDescription>
                 </div>
-                {isAdmin && ( // This button will be hidden as isAdmin is false
-                    <Button 
-                        onClick={handleAddMember} 
-                        variant="default" 
-                        className="bg-accent hover:bg-accent/90 text-accent-foreground sm:ml-auto"
-                    >
-                        <UserPlus className="mr-2 h-5 w-5" />
-                        Add New Member
-                    </Button>
-                )}
+                <Button 
+                    onClick={handleAddMember} 
+                    variant="default" 
+                    className="bg-accent hover:bg-accent/90 text-accent-foreground sm:ml-auto"
+                >
+                    <UserPlus className="mr-2 h-5 w-5" />
+                    Add New Member
+                </Button>
             </div>
           </CardHeader>
           <CardContent>
-            {members.length === 0 ? (
+            {/* Filters Section */}
+            <Card className="mb-6 bg-muted/30 shadow-sm border">
+                <CardHeader className="pb-3">
+                    <CardTitle className="text-lg font-semibold flex items-center">
+                        <FilterIcon className="mr-2 h-5 w-5 text-primary" />
+                        Filter Members
+                    </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 items-end">
+                        <div>
+                            <Label htmlFor="search-member" className="text-sm font-medium">Search by Name/Phone</Label>
+                             <div className="relative mt-1">
+                                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
+                                <Input
+                                    id="search-member"
+                                    type="text"
+                                    placeholder="Search..."
+                                    value={searchTerm}
+                                    onChange={(e) => setSearchTerm(e.target.value)}
+                                    className="pl-10"
+                                />
+                            </div>
+                        </div>
+                        <div className="flex items-center space-x-2 pt-2 md:pt-0 md:self-end md:pb-1">
+                            <Checkbox
+                                id="filter-loan"
+                                checked={showOnlyWithLoan}
+                                onCheckedChange={(checked) => setShowOnlyWithLoan(Boolean(checked))}
+                            />
+                            <Label htmlFor="filter-loan" className="text-sm font-medium">
+                                Has Outstanding Loan
+                            </Label>
+                        </div>
+                    </div>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                            <Label className="text-sm font-medium">Contribution Level</Label>
+                            <p className="text-xs text-muted-foreground mt-1">
+                                (e.g., All Contributions, Above Average, etc. - Future filter)
+                            </p>
+                        </div>
+                        <div>
+                            <Label className="text-sm font-medium">Savings Level</Label>
+                            <p className="text-xs text-muted-foreground mt-1">
+                                (e.g., All Savings, Top Savers, etc. - Future filter)
+                            </p>
+                        </div>
+                    </div>
+                </CardContent>
+            </Card>
+
+            {/* Table Section */}
+            {filteredMembers.length === 0 ? (
                 <div className="flex flex-col items-center justify-center py-12 text-center bg-muted/50 rounded-md">
                     <Info className="w-16 h-16 text-muted-foreground mb-4" />
-                    <p className="text-lg font-medium text-foreground">No Member Data</p>
+                    <p className="text-lg font-medium text-foreground">
+                        {hasActiveFilters ? "No Members Match Filters" : "No Member Data"}
+                    </p>
                     <p className="text-muted-foreground mb-6">
-                      {isAdmin ? "Click \"Add New Member\" to get started." : "No member data available to display."}
+                      {hasActiveFilters 
+                        ? "Try adjusting your search or filter criteria."
+                        : 'Click "Add New Member" to get started.'}
                     </p>
                 </div>
             ) : (
@@ -233,7 +331,7 @@ export default function ContributionsPage() {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {members.map((member) => (
+                  {filteredMembers.map((member) => (
                     <TableRow key={member.id}>
                       {tableColumns.map(column => (
                         <TableCell key={`${member.id}-${column.accessorKey}`} className={`p-2 align-top ${column.className || ''}`}>
@@ -244,7 +342,7 @@ export default function ContributionsPage() {
                                 size="sm"
                                 onClick={() => handleUpdateMember(member.id)}
                                 className="w-full sm:w-auto"
-                                disabled={!isAdmin} // Will be disabled
+                                disabled={!isAdmin}
                                 >
                                 <Edit3 className="mr-1 h-4 w-4" /> Update
                                 </Button>
@@ -253,7 +351,7 @@ export default function ContributionsPage() {
                                 size="sm"
                                 onClick={() => handleDeleteMember(member.id)}
                                 className="w-full sm:w-auto"
-                                disabled={!isAdmin} // Will be disabled
+                                disabled={!isAdmin}
                                 >
                                 <Trash2 className="mr-1 h-4 w-4" /> Delete
                                 </Button>
@@ -262,12 +360,15 @@ export default function ContributionsPage() {
                             <Input
                               type={column.cellType === 'number' && column.accessorKey !== 'phone' ? 'number' : 'text'}
                               value={member[column.accessorKey as keyof Omit<Member, 'id'|'actions'>]}
-                              onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
-                                handleInputChange(member.id, column.accessorKey as keyof Omit<Member, 'id'|'sn'>, e.target.value);
+                              onChange={(e) => {
+                                const isNewUnsavedMember = !initialMembersData.some(im => im.name === member.name && im.phone === member.phone);
+                                if (isAdmin || (isNewUnsavedMember && member.name === "" ) ) { 
+                                   handleInputChange(member.id, column.accessorKey as keyof Omit<Member, 'id'|'sn'>, e.target.value);
+                                }
                               }}
                               placeholder={column.placeholder}
                               className="w-full h-10"
-                              readOnly={!isAdmin} // Will be read-only
+                              readOnly={!isAdmin && !(member.name === (tableColumns.find(c => c.accessorKey === 'name')?.defaultValue as string ?? "") && column.accessorKey !== 'sn')}
                             />
                           ) : (
                              <div className="flex items-center h-10">
@@ -288,3 +389,6 @@ export default function ContributionsPage() {
     </AppShell>
   );
 }
+
+
+    

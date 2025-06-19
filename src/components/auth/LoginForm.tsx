@@ -13,7 +13,7 @@ import { Eye, EyeOff, LogIn, Mail } from "lucide-react";
 import { useState } from "react";
 
 export function LoginForm() {
-  const { login, isLoading } = useAuth(); // Use isLoading from context
+  const { login, isLoading } = useAuth();
   const [showPassword, setShowPassword] = useState(false);
 
   const form = useForm<LoginFormData>({
@@ -25,7 +25,6 @@ export function LoginForm() {
   });
 
   const onSubmit = async (data: LoginFormData) => {
-    // isLoading state is handled within the login function in AuthContext
     await login(data.email, data.password);
   };
 
@@ -87,9 +86,6 @@ export function LoginForm() {
           Sign up
         </Link>
       </p>
-      {/* <p className="text-xs text-center text-muted-foreground pt-4">
-        (Passwords are now managed by Firebase.)
-      </p> */}
     </form>
   );
 }

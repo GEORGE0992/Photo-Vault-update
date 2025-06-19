@@ -1,6 +1,25 @@
 {
   "pages": {
-    "/_app": []
+    "/_app": [
+      "static/chunks/[root-of-the-server]__05e3375c._.js",
+      "static/chunks/b227c_react_b1697aa1._.js",
+      "static/chunks/b227c_react-dom_cjs_react-dom_development_3b968a46.js",
+      "static/chunks/b227c_react-dom_5521145d._.js",
+      "static/chunks/b227c_74354abd._.js",
+      "static/chunks/[root-of-the-server]__541ab6e4._.js",
+      "static/chunks/Photo Vault_pages__app_5771e187._.js",
+      "static/chunks/Photo Vault_pages__app_0d13cce6._.js"
+    ],
+    "/_error": [
+      "static/chunks/[root-of-the-server]__1ea494c4._.js",
+      "static/chunks/b227c_react_b1697aa1._.js",
+      "static/chunks/b227c_react-dom_cjs_react-dom_development_3b968a46.js",
+      "static/chunks/b227c_react-dom_5521145d._.js",
+      "static/chunks/b227c_74354abd._.js",
+      "static/chunks/[root-of-the-server]__6b70362c._.js",
+      "static/chunks/Photo Vault_pages__error_5771e187._.js",
+      "static/chunks/Photo Vault_pages__error_1181c986._.js"
+    ]
   },
   "devFiles": [],
   "ampDevFiles": [],

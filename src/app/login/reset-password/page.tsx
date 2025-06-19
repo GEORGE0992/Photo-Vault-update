@@ -1,17 +1,10 @@
-
 import { AuthLayout } from "@/components/auth/AuthLayout";
-// import { ResetPasswordForm } from "@/components/auth/ResetPasswordForm"; // Form removed for now
+import { LoginForm } from "@/components/auth/LoginForm";
 
-export default function ResetPasswordPage() {
+export default function LoginPage() {
   return (
-    <AuthLayout 
-      title="Reset Your Password" 
-      description="Password reset functionality is temporarily unavailable. It will be re-enabled using Firebase's secure password reset feature in a future update."
-    >
-      {/* <ResetPasswordForm /> */}
-      <p className="text-center text-muted-foreground">
-        Please return to the <a href="/login" className="text-primary hover:underline">login page</a>.
-      </p>
+    <AuthLayout title="Welcome Back!" description="Log in to access your Photo Vault.">
+      <LoginForm />
     </AuthLayout>
   );
 }
