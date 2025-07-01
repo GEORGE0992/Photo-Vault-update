@@ -1,5 +1,5 @@
 import Link from 'next/link';
-import { PhotoVaultIcon } from '@/components/icons/PhotoVaultIcon';
+import { PhotoVaultIcon } from '../components/icons/PhotoVaultIcon';
 
 export function Logo() {
   return (
